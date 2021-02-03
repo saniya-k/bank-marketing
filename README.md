@@ -1,73 +1,77 @@
-### bank-marketing
-Classification problem to predict potential subscribers of a term deposit scheme for a Portuguese Bank
+# bank-marketing
 
+***Classification problem to predict potential subscribers of a term deposit scheme for a Portuguese Bank***
 
-# SVM
+![banner-img](/images/banner.jpg) 
+
 ## Introduction
-Support vector machines offer a way for binary classification by trying to separate classes using a hyperplane in feature space. Although it is difficult to find such a hyperplane for most datasets, SVM achieves this by using 2 methods :
-a)	Using a soft margin : In this we allow some points (which maybe outliers for the class) to be included on wrong side of the margin and tuning the hyperparameter C which is the allowable cost for misclassification. Tuning is done via k-fold cross validation. 
-b)	Employing the kernel trick : Data sometimes might be no-separable in the original feature space but when SVM uses kernel trick to enlarge the feature space, a hyperplane maybe found to separate the classes.
-## Prerequisites
-After the general EDA and data cleaning tasks, SVM requires some preprocessing to be done to the data to construct a model.
-1.	Irrelevant and Redundant Variables are handled by SVM hence we have not done any feature selection
-2.	Missing rows are imputed in previous steps.
-3.	Scaling is done by the SVM algorithm itself.
-4.	One hot encoding is done for categorical variables.
-5.	Data is divided --  80% training set, 20% to testing set
-6.	Data is balanced using SMOTE, this is done to improve performance i.e. detecting the minority class 1 (which corresponds to “Yes”). The parameters perc.over and perc.under drives the oversampling of minority class & under sampling of the majority class. Perc.under argument controls the fraction of cases of the majority class that will be randomly selected for the final "balanced" data set.
 
-## SVM Process:
-1.	As we have about 49 columns after creation of dummy values, to visualize the data in 2 d space we have used PCA. As we can see from the plot below a lot of observations corresponding to “No” (0) is clustered towards the right side of the plot and “Yes” on the left but there are a huge number of observations which are not separable in 2-D space. Selecting an appropriate hyperplane seems difficult in 2-D space. 
- 
-2.	Kernel selection : We use SVM function from the package e1071 and fit the balanced training data to different types of kernels – Linear, Radial, Polynomial and Sigmoid and evaluate performance. Accuracy measures for the different kernels are :
+Majority of the bank offer accounts where the owners can withdraw or deposit the money anytime. This makes it difficult for the banks to plan ahead of time about their lending power. To deal with this situation, banks introduced term deposit accounts where the money will be locked with the bank for a certain period of time. This gave the bank the flexibility to lend money forward. However, one of the major challenges is to identify customers who would be interested in subscribing for a term deposit.
 
+## Problem Statement
 
+I have a [dataset](https://archive.ics.uci.edu/ml/datasets/Bank+Marketing) of direct marketing campaigns run by a Portuguese banking institute. Our goal is to identify which of the customers have a higher chance of subscribing to the term deposit service before a sales rep makes a call to a potential customer. This will help the business reach out to a targeted list of customers having a higher chance of conversion . Furthermore, I looked into what features ascribe to potential subscribers.
 
-Kernel	Accuracy
-Linear 	0.8873249
-Radial	0.9175647
-Polynomial	0.9284079
-Sigmoid	0.8171471
+## Approach
 
+I used and compared two machine learning algorithms to solve this prediction challenge - SVM and Decision Trees. Decision Tree was also used to find the variable importance i.e. it helped  identify features that can be attributed to a potential subscriber.
 
+### Data Exploration and Cleaning
 
+*File : EDA_Preprocessing.R* 
 
+**Key questions answered in this analysis:**
 
-3.	As the best performance is on polynomial kernel, we perform hyperparameter tuning of the C and degree parameters using 10 fold cross validation and grid search. Results are shown below:
- 
-As we can see the best model is the one with degree 5 and cost 8.
-4.	We use this model to evaluate the performance on complete train data set and we get very high values for accuracy, kappa , Recall and Precision. It almost looks to good to be true :
- 5.	We use this model to check its performance on test dataset, as we can see accuracy and recall reduce to some extent but the value for kappa , precision and F1 have drastically fallen down, showing that the model has some degree of overfitting:
- 6.	We evaluate the test performance on the non-cross validated polynomial SVM , which was giving the best performance earlier. Recall has increased to 87.16% and the kappa value has increased indicating moderate agreement.
+- Do people in certain jobs subscribe more?
+- Are there certain months /days when people tend to subscribe more?
+- What is the relationship subscription and Number of Contacts made during the Campaign? Also, do people who successfully converted to a previous campaign, are they potential subscribers for this one as well?
+- How many missing values are there in the dataset? Are certain columns missing more values than others? What is the best strategy to handle them?
+- Is the data balanced?
 
+In this process, the data was cleaned, and missing values were treated, categorical columns were dummy encoded and data was divided 80% training set, 20% to testing set so that the it becomes ready for the next steps.
 
-## Model Performance :
+### Model Building
 
-Performance on cross validated model on test data (degree=5,c=8) :
- 
-Performance on original Polynomial SVM model on test data (degree=3,c=1) :
- 
-The latter has a higher AUC on test data; hence it is the final model:
- 
+**Decision Tree**
 
+*File : DecisionTree.R* 
 
+Data is divided -- 80% training set, 20% to testing set.
 
-## Final SVM Model Parameter and Performance on Complete Dataset
-KERNEL:	POLYNOMIAL
-DEGREE:	3
-COST:	1
-TRAIN ACCURACY:	92.84%
-TRAIN KAPPA:	85.68%
-TRAIN PRECISION:	90.84%
-TRAIN RECALL:	93.01%
-TEST ACCURACY:	85.71%
-TEST KAPPA:	50.4%
-TEST PRECISION:	43.33%
-TEST RECALL:	87.1%
-TEST F1:	57.85%
-TEST AUC:	86.3%
- 
+Using the Decision Tree, we found the following features are most essential : 
+
+![vimp](/images/vimp.png)
+
+Of these, we did not use the 'duration' column as this feature would be only know *after* a call is made to a customer and won't be useful in this prediction.
+
+*Model Performance* 
+
+![perf_dtree](/images/perf_dtree2.png)
+
+**Support Vector Machine**
+
+*File : SVM.R* 
+
+- As I have about 49 columns after creation of dummy values, to visualize the data in 2 d space I have used **PCA**. As we can see from the plot below a lot of observations corresponding to “No” (0) is clustered towards the right side of the plot and “Yes” on the left but there are a huge number of observations which are not separable in 2-D space. Selecting an appropriate hyperplane seems difficult in 2-D space.
+
+    ![SVM_PCA](/images/SVM_PCA.png)
+
+- **Kernel selection** : I used SVM function from the package e1071 and fit the balanced training data to different types of kernels – Linear, Radial, Polynomial and Sigmoid and evaluate performance. Accuracy measures for the different kernels are :
+
+    ![svm_acc_train](images/svm_acc_train.png)
+
+- The best performance is on **polynomial kernel,** I performed hyperparameter tuning of the C and degree parameters using 10 fold cross validation and grid search.
+
+    *Model Performance :*
+
+- Performance on Polynomial SVM model on test data (degree=3,c=1)
+
+    ![svm_test](/images/svm_test.png)
+
+- AUC on test data
+
+    ![ROC_SVM_C](/images/ROC_SVM_C.png)
 
 ## Conclusion
-Our goal is to identify people who will subscribe to the term deposit i.e. we are aiming for a high recall. The final model has a high True positive rate (TPR) of 87.16%  and low false positive rate (FPR) of 14.5%. The value for precision is low due to the fact the positive class(1 or “Yes”) is in minority and even a small number of  false positives overwhelm the true positive and skew the precision calculation. Hence as evidenced by the AUC values, we can say that this model does a good job at identifying potential people who would subscribe to the term deposit.
 
+Our goal is to identify people who will subscribe to the term deposit i.e. we are aiming for a high recall. The final model that I have selected is SVM. It has a high True positive rate (TPR) of 87.16%  and low false positive rate (FPR) of 14.5%. The value for precision is low due to the fact the positive class(1 or “Yes”) is in minority and even a small number of  false positives overwhelm the true positive and skew the precision calculation. Hence as evidenced by the AUC values, we can say that this model does a good job at identifying potential people who would subscribe to the term deposit.

@@ -4,6 +4,7 @@ library(DMwR)
 library(rpart) 
 library(rpart.plot) 
 library(kableExtra)
+library(caret)
 ##### Read data #### 
 imputed= read.csv("data/Imputed_data.csv",header=TRUE,stringsAsFactors = TRUE)
 
@@ -42,6 +43,7 @@ DT_grid <- train(form=y ~ .,
 DT_grid
 plot(DT_grid)
 varImp(DT_grid)
+varImpPlot(DT_grid,type=2)
 confusionMatrix(DT_grid, positive="1")
 
 
